@@ -1,0 +1,14 @@
+services:
+  # ─── Backend Service (Express API on Render) ────────────────────────────────
+  - type: web
+    name: fido2-webauthn-backend
+    runtime: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+    disk:
+      name: backend-data
+      mountPath: /opt/render/project/src/backend/data # ยึดโยง users.json ให้คงอยู่ถาวร
+      sizeGB: 1

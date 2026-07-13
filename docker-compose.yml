@@ -1,0 +1,48 @@
+services:
+  # ─── Backend Service (Express API) ──────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: webauth-backend
+    ports:
+      - "5000:5000"           # เข้าถึงได้ที่ http://localhost:5000
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+    volumes:
+      # Persistent storage สำหรับ users.json ใน backend container
+      - webauth-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─── Frontend Service (Next.js Client) ───────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: webauth-frontend
+    ports:
+      - "3000:3000"           # เข้าถึงได้ที่ http://localhost:3000
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      - NEXT_PUBLIC_API_URL=http://localhost:5000 # ชี้เป้าไปที่ backend container / port
+    restart: unless-stopped
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  webauth-data:
+    driver: local
